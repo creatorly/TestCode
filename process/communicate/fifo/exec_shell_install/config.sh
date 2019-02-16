@@ -1,7 +1,5 @@
 #!/bin/bash
 
-VAD_STD_PREFIX="/opt/ejoin/vifi/vad"
-
 chkdir() {
   prompt=${2:-"no such directory"}
   [ ! -d "$1" ] && echo "$1: $prompt" && exit
@@ -21,14 +19,9 @@ addConfig() {
   echo "$1=$2" >> $config_env
 }
 
-TOP_SRC=$PWD
-
 VAD_HOME=$PWD
-cd $TOP_SRC
 
 VAD_PREFIX=${3:-$VAD_HOME}
-
-#chkdir $VAD_PREFIX
 
 echo "VAD_PREFIX = $VAD_PREFIX"
 
@@ -40,35 +33,13 @@ ACOM_PORT_NUM="2"
 ACOM_BOARD_TYPE="RALINK"
 ACOM_BIN_TYPE="vad"
 
-VAD_STD_PREFIX+=/$BOARD_NAME
-echo "VAD_STD_PREFIX = $VAD_STD_PREFIX"
+BOARD_NAME="$(echo $1 | tr [A-Z\-] [a-z_])"
 
-addConfig std_prefix $VAD_STD_PREFIX
 addConfig board_name $BOARD_NAME
 addConfig bin_type $ACOM_BIN_TYPE
 
 addConfig pkg_name $ACOM_BIN_TYPE
 addConfig fac_mode 0
-
-mkdir_p $VAD_PREFIX/include $VAD_PREFIX/lib $VAD_PREFIX/bin
-
-# copy the common liberaries
-/bin/cp -af $COMMON_LIB/libeos* $COMMON_LIB/libeut* $VAD_PREFIX/lib/
-
-# copy the common header files and libraries
-[ "$VAD_PREFIX" != "$VAD_HOME" ] && {
-  cp -afu $VAD_HOME/include $VAD_PREFIX/
-  cp -afu $VAD_HOME/lib $VAD_PREFIX/
-}
-
-# copy all other libraries and binaries
-[ "$VAD_PREFIX" != "$VAD_STD_PREFIX" ] && {
-  for dir in $VAD_STD_PREFIX/lib $VAD_STD_PREFIX/bin $VAD_STD_PREFIX/include
-  do
-    # DON'T delete the option -u, it menas only cover the old existed files
-    [ -d "$dir" ] && cp -afu $dir $VAD_PREFIX/
-  done    
-}
 
 MAKEFILES=`grep '/[Mm]akefile *$' configure.ac`
 
@@ -109,7 +80,6 @@ EXTRA_DEFINE+="-DACOM_BOARD_TYPE=$ACOM_BOARD_TYPE "
 
 # define the values of borad subtype
 EXTRA_DEFINE+="-DRL00=0 -DRL01=1 -DRL02=2 -DRL03=3 -DMT_U3=10 -DMT_U4=11 -DMDM_01=20 "
-EXTRA_DEFINE+="-DACOM_BOARD_SUBTYPE=$ACOM_BOARD_SUBTYPE "
 
 # define the values of hardware type
 EXTRA_DEFINE+="-DHWKS86954S=1 -DHWKS86958S=2 -DHWKS8695INFINEON2S=3 -DHWPPC4054S=4 -DHWPPC40516S=5 -DHWSAMSUNG4510B2S=6 -DHWPPC40532S=7 -DHWGOIP=8 -DHWVOIP=9 -DHWSIMPOOL=10 -DHWUUWIFI=11 "
@@ -117,14 +87,12 @@ EXTRA_DEFINE+="-DACOM_HW_TYPE=$ACOM_HW_TYPE -DACOM_PORT_NUM=$ACOM_PORT_NUM "
 
 # define the values of sub-hw type
 EXTRA_DEFINE+="-DHWST_NONE=0 -DHWST_3G4G=0 -DHWST_2G4G=1 "
-EXTRA_DEFINE+="-DACOM_HW_SUBTYPE=$ACOM_HW_SUBTYPE "
 
 EXTRA_DEFINE+="-g -O0 "
 EXTRA_DEFINE+="-Wno-unused-but-set-variable "
 
+
 CC=gcc \
-LIBC=$TOOLSCHAIN/lib \
-LDFLAGS="-L$TOOLSCHAIN/lib -L$TOOLSCHAIN/usr/lib -L$TARGET/usr/lib" \
 ./configure --enable-shared=yes --prefix=$VAD_PREFIX \
  --disable-werror --disable-gdbtk --disable-tui \
  --without-x --without-included-regex --without-included-gettext \
