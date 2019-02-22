@@ -1,0 +1,12 @@
+Makefile
+CMakeCache.txt
+CMakeFiles
+*.cmake
+*.a
+*.so
+*.dylib
+uhttpd
+uhttpd_ubus.so
+uhttpd_lua.so
+install_manifest.txt
+build
